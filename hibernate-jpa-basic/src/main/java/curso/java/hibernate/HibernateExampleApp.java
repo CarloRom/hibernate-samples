@@ -1,9 +1,10 @@
 package curso.java.hibernate;
 
 import curso.java.hibernate.data.EmployeeRepository;
+import curso.java.hibernate.data.ScopeRepository; // Importa el ScopeRepository
 import curso.java.hibernate.data.entity.Employee;
 import curso.java.hibernate.data.entity.Task;
-import curso.java.hibernate.data.entity.Scope; // Asegúrate de importar la clase Scope
+import curso.java.hibernate.data.entity.Scope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,10 @@ public class HibernateExampleApp implements CommandLineRunner {
   private Logger logger = LoggerFactory.getLogger(this.getClass());
 
   @Autowired
-  EmployeeRepository repository;
+  EmployeeRepository employeeRepository;
+
+  @Autowired
+  ScopeRepository scopeRepository; // Inyección del ScopeRepository
 
   public static void main(String[] args) {
     SpringApplication.run(HibernateExampleApp.class, args);
@@ -37,56 +41,61 @@ public class HibernateExampleApp implements CommandLineRunner {
     emp2.setFirstName("Bart");
     emp2.setLastName("Simpson");
 
-    emp2.setTasks(getTasks());
+    emp2.setTasks(getTasks(emp2)); // Pasar emp2 a getTasks
 
-    repository.save(emp2); // Guardar el empleado, junto con las tareas y scopes
+    employeeRepository.save(emp2); // Guardar el empleado, junto con las tareas y scopes
 
     // Mostrar todos los empleados con sus tareas y scopes
     showAllEmployeesWithTasksAndScopes();
   }
 
-  private Set<Task> getTasks() {
+  private Set<Task> getTasks(Employee employee) {
     Set<Task> tasks = new HashSet<>();
 
-    // Crear la primera tarea y su scope
-    Task task1 = new Task();
-    task1.setTaskName("report generation");
-    task1.setTaskDescription("Daily report generation");
-
-    Scope scope1 = new Scope(); // Crear un Scope para la tarea 1
+    // Crear el primer scope y guardarlo
+    Scope scope1 = new Scope();
     scope1.setName("Report Scope");
     scope1.setDescription("Scope for report generation task");
-    task1.setScope(scope1); // Asociar el Scope a la tarea 1
 
-    tasks.add(task1); // Agregar tarea 1 a la lista de tareas
+    // Comprobar si el Scope ya existe
+    Optional<Scope> existingScope = scopeRepository.findByName(scope1.getName());
+    if (existingScope.isPresent()) {
+      scope1 = existingScope.get(); // Utilizar el existente
+    } else {
+      scope1 = scopeRepository.save(scope1); // Guardar nuevo scope
+    }
+//El ámbito scope1, tiene varias tareas (la una y la dos) y cada tarea pertenece a un ámbito
+    // Crear la primera tarea y asociarla al scope1
+    Task task1 = new Task();
+    task1.setTaskName("Report Generation");
+    task1.setTaskDescription("Daily report generation");
+    task1.setScope(scope1);
+    task1.setEmployee(employee);
+    tasks.add(task1);
 
-    // Crear la segunda tarea y su scope
+    // Crear la segunda tarea y asociarla al scope1
     Task task2 = new Task();
-    task2.setTaskName("view generation");
+    task2.setTaskName("View Generation");
     task2.setTaskDescription("Daily view generation");
-
-    Scope scope2 = new Scope(); // Crear un Scope para la tarea 2
-    scope2.setName("View Scope");
-    scope2.setDescription("Scope for view generation task");
-    task2.setScope(scope2); // Asociar el Scope a la tarea 2
-
-    tasks.add(task2); // Agregar tarea 2 a la lista de tareas
+    task2.setScope(scope1);
+    task2.setEmployee(employee);
+    tasks.add(task2);
 
     return tasks; // Devolver el conjunto de tareas
   }
 
   private void showAllEmployeesWithTasksAndScopes() {
     logger.info("List of all employees with their tasks and scopes:");
-    for (Employee employee : repository.findAll()) {
+    for (Employee employee : employeeRepository.findAll()) {
       System.out.println("Empleado: " + employee.getFirstName() + " " + employee.getLastName());
 
       for (Task task : employee.getTasks()) {
         String scopeName = (task.getScope() != null) ? task.getScope().getName() : "Sin scope";
-        String scopeDescription = task.getScope().getDescription();
+        String scopeDescription = (task.getScope() != null) ? task.getScope().getDescription() : "Sin descripción";
         System.out.println("  Tarea: " + task.getTaskName() +
                 ", Descripción: " + task.getTaskDescription() +
                 ", Scope: " + scopeName +
-                ", ScopeDescription: " + scopeDescription);
+                ", Descripción del Scope: " + scopeDescription);
       }
     }
   }

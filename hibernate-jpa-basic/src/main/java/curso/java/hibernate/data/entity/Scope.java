@@ -2,6 +2,8 @@ package curso.java.hibernate.data.entity;
 
 import jakarta.persistence.*;
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "TBL_SCOPE")
@@ -9,11 +11,17 @@ public class Scope implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column
     private Integer id;
+
     @Column
     private String name;
+
     @Column
     private String description;
+
+    @OneToMany(mappedBy = "scope", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<Task> tasks = new HashSet<>(); // Relación OneToMany con Task
 
     // Getters y Setters
     public Integer getId() {
@@ -38,6 +46,14 @@ public class Scope implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Set<Task> getTasks() {
+        return tasks;
+    }
+
+    public void setTasks(Set<Task> tasks) {
+        this.tasks = tasks;
     }
 
     @Override

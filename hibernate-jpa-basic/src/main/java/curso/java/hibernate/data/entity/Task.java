@@ -12,15 +12,20 @@ public class Task implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "task_name")
+    @Column
     private String taskName;
 
-    @Column(name = "task_description")
+    @Column
     private String taskDescription;
 
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL) // Relación uno a uno con Scope
-    @JoinColumn(name = "scope_Id") // Asegúrate de que el nombre de la columna sea correcto
+    @ManyToOne
+    @JoinColumn(name = "employee_id", nullable = false)
+    private Employee employee;
+
+    @ManyToOne
+    @JoinColumn(name = "scope_id", nullable = false)
     private Scope scope;
+
 
     // Getters y Setters
     public Integer getId() {
@@ -47,21 +52,19 @@ public class Task implements Serializable {
         this.taskDescription = taskDescription;
     }
 
+    public Employee getEmployee() {
+        return employee;
+    }
+
+    public void setEmployee(Employee employee) {
+        this.employee = employee;
+    }
+
     public Scope getScope() {
         return scope;
     }
 
     public void setScope(Scope scope) {
         this.scope = scope;
-    }
-
-    @Override
-    public String toString() {
-        return "Task{" +
-                "id=" + id +
-                ", taskName='" + taskName + '\'' +
-                ", taskDescription='" + taskDescription + '\'' +
-                ", scope=" + (scope != null ? scope.getName() : "None") +
-                '}';
     }
 }
