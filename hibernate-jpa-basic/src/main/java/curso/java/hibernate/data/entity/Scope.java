@@ -48,14 +48,6 @@ public class Scope implements Serializable {
         this.description = description;
     }
 
-    public Set<Task> getTasks() {
-        return tasks;
-    }
-
-    public void setTasks(Set<Task> tasks) {
-        this.tasks = tasks;
-    }
-
     @Override
     public String toString() {
         return "Scope{" +
